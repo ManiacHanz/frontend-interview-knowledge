@@ -5,6 +5,9 @@
 
 这里先分析一小段`koa-bodyparser`的原理，[仓库地址](https://github.com/koajs/bodyparser)
 
+**这里有一个概念是`rawbody`，找了半天也没找到。最后通过[npm仓库地址](https://www.npmjs.com/package/raw-body)找到了一段解释。**
+
+> Gets the entire buffer of a stream either as a Buffer or a string. Validates the stream's length against an expected length and maximum limit. Ideal for parsing request bodies.
 
 
 ```js
