@@ -3,13 +3,13 @@
 
 > 常用的用来解析`POST`请求数据的中间件，如表单、文件上传等
 
-
+### koa-bodyparser
 
 这里先分析一小段`koa-bodyparser`的原理，[仓库地址](https://github.com/koajs/bodyparser)
 
-*结论（仅供参考）：`bodyparser`的解析原理其实就是根据`request`里的`Content-type`关键字来调用不同的`parse`方法，常用的在默认配置项里，当然也可以通过`extendType`增加自定义格式。比如说`POST`请求里一个常见的`multipart/form-data`格式，用`bodyparser`显然就解析不出来*
+**结论（仅供参考）：`bodyparser`的解析原理其实就是根据`request`里的`Content-type`关键字来调用不同的`parse`方法，常用的在默认配置项里，当然也可以通过`extendType`增加自定义格式。比如说`POST`请求里一个常见的`multipart/form-data`格式，用`bodyparser`显然就解析不出来**
 
-**这里有一个概念是`rawbody`，找了半天也没找到。最后通过[npm仓库地址](https://www.npmjs.com/package/raw-body)找到了一段解释。**
+*这里有一个概念是`rawbody`，找了半天也没找到。最后通过[npm仓库地址](https://www.npmjs.com/package/raw-body)找到了一段解释。*
 
 > Gets the entire buffer of a stream either as a Buffer or a string. Validates the stream's length against an expected length and maximum limit. Ideal for parsing request bodies.
 
