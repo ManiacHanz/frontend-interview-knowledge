@@ -233,6 +233,8 @@ function respond(ctx) {
 
 至此，大概的流程就这么多了，最核心的主要是在`compose`那部分对中间件的处理。同时，这里可以平行的和`redux`里对`applyMiddleware`里面的`compose`进行横向对比
 
+`koa2`的中间件`compose`原理就是这么简单粗暴（是在下孤陋了）。而之前`koa1`由于使用的`Generator`，不像`Promise`是直接可以往后流，而是返回一个指针，带着`value`和`done`两个属性，同时引用了`co`模块去打到自动执行`Generator`的目的。想探索的朋友可以到这篇文章顶部的链接去看之前的原理，包括`Generator`一整块的原理，也着实比较有意思。xD
+
 最后放上`koa` `application.js`的源码片段
 
 ```js
