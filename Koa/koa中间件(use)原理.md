@@ -85,7 +85,23 @@ module.exports = class Application extends Emitter {
 
 其实`use`只是把所有的`fn`放在了一个数组里，而通过`compose`把这个数组处理后返回来，那我们深入看下这个看着熟又不熟的“老熟人” [compose](https://github.com/koajs/compose/blob/master/index.js)
 
-`compose`是一个典型的柯里化函数，返回的`fn`也是给中间件处理的函数，其中很重要的是数组的长度，和当前的`index`下标
+`compose`是一个典型的柯里化函数，返回的`fn`也是给中间件处理的函数，其中很重要的是数组的长度，和当前的`index`下标。 `compose`会把`middleware`数组里面的函数变成 `fn1(ctx, fn2(ctx, fn3() ) )`的格式，这里和`redux`那里有异曲同工。再说简单点，这里的`next`，其实就是用数组里的后一个函数替代，也就是下面一段例子
+
+```js
+fn1(ctx, ) {
+    console.log(1)
+    fn2(ctx, ) {
+        console.log(2)
+        fn3(ctx){
+            console.log(3)
+        }
+        console.log(4)
+    }
+    console.log(5)
+}
+```
+
+简单吧，那下面看下源码里面的实现
 
 ```js
 
@@ -114,7 +130,8 @@ function compose (middleware) {
             if (i === middleware.length) fn = next
             // 最后一个为空的next时候还是要返回一个Promise，这个是关键，才能保证后面的继续调用
             // 换句话也可以说，所有的都需要包装成一个Promise
-            // todo 最后一项走到这里如何回流上游？？
+            // 由于 fn1(ctx, fn2(ctx, fn3() ) )以后 只需要把最后一个用promise包一下，就会自然回流形成洋葱模型
+            // 也就是fn3执行完了以后继续执行fn2未执行完的部分，这里和redux那里有异曲同工
             if (!fn) return Promise.resolve()
             try {
                 // 每一个中间件执行在ctx环境下，同时递归调用下一个下标的fn
