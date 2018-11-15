@@ -1,11 +1,11 @@
 ## 不定期收集一些常用中间件和简单解析在下
 
 
-[cors][1]
+[cors](#跨域)
 
 ------ 留位置给超链接--------
 
-### [1]: 跨域
+### 跨域
 [cors](https://github.com/koajs/cors/blob/master/index.js)
 
 这个源码的注释已经很明显了，各个配置代表的request Header里面的几个配置项，这里增加一点`http`的请求头知识点。
