@@ -3,6 +3,12 @@
 
 [node地址](http://nodejs.cn/api/cluster.html)
 
+先放上大神的相关博客(感谢这些大神的无私分享)
+[当我们谈论 cluster 时我们在谈论什么(上)](http://taobaofed.org/blog/2015/11/03/nodejs-cluster/)
+[当我们谈论 cluster 时我们在谈论什么（下）](http://taobaofed.org/blog/2015/11/10/nodejs-cluster-2/)
+
+关键字： **负载均衡，异常捕获，进程稳定性，通信**
+
 *水平有限，没有使用过，先记录一点简单的概念、知识*
 
 > Node.js在单个线程中运行单个实例。 用户(开发者)为了使用现在的多核系统，有时候,用户(开发者)会用一串Node.js进程去处理负载任务。
