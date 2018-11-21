@@ -5,6 +5,8 @@
 ### 目录
 * [cors](#跨域)
 * [koa-logger](#logger)
+* [koa-send](#koa-send)
+* [koa-static](#koa-static)
 
 ------ 留位置给超链接--------
 
@@ -338,7 +340,71 @@ function time (start) {
 [回到顶部](#readme)
 
 ### 静态资源
+
+koa-send
+
+> Static file serving middleware.
+
+[仓库地址](https://github.com/koajs/send)
+
+*这个库是给`koa-static`打基础的库，用于找到并返回给浏览器静态文件*
+
+我们只看核心代码，不看配置和排错处理
+核心是`node`原生的`fs`，通过`fs.Stat`类获取到文件信息来满足自定义设置头部；格式化`path`获取到文件信息以后，通过`ctx.body = fs.createReadStream(path)`来返回给前台一个文件流
+
+```js
+async function send (ctx, path, opts = {}) { 
+  // ... 配置处理， 排错处理
+  let stats
+  try {
+    stats = await fs.stat(path)
+
+    // Format the path to serve static file servers
+    // and not require a trailing slash for directories,
+    // so that you can do both `/directory` and `/directory/`
+    if (stats.isDirectory()) {
+      if (format && index) {
+        path += '/' + index
+        stats = await fs.stat(path)
+      } else {
+        return
+      }
+    }
+  } catch (err) {
+    const notfound = ['ENOENT', 'ENAMETOOLONG', 'ENOTDIR']
+    if (notfound.includes(err.code)) {
+      throw createError(404, err)
+    }
+    err.status = 500
+    throw err
+  }
+
+  if (setHeaders) setHeaders(ctx.res, path, stats)
+
+  // 流以及自定义的setHeader
+  ctx.set('Content-Length', stats.size)
+  if (!ctx.response.get('Last-Modified')) ctx.set('Last-Modified', stats.mtime.toUTCString())
+  if (!ctx.response.get('Cache-Control')) {
+    const directives = ['max-age=' + (maxage / 1000 | 0)]
+    if (immutable) {
+      directives.push('immutable')
+    }
+    ctx.set('Cache-Control', directives.join(','))
+  }
+  if (!ctx.type) ctx.type = type(path, encodingExt)
+  // 核心逻辑就是这里
+  ctx.body = fs.createReadStream(path)
+
+  return path
+
+}
+```
+
+[回到顶部](#readme)
+
 koa-static
+
+[回到顶部](#readme)
 
 ### 路由
 koa-router
