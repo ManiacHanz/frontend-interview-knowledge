@@ -353,6 +353,8 @@ koa-send
 核心是`node`原生的`fs`，通过`fs.Stat`类获取到文件信息来满足自定义设置头部；格式化`path`获取到文件信息以后，通过`ctx.body = fs.createReadStream(path)`来返回给前台一个文件流
 
 ```js
+module.exports = send
+
 async function send (ctx, path, opts = {}) { 
   // ... 配置处理， 排错处理
   let stats
@@ -403,6 +405,66 @@ async function send (ctx, path, opts = {}) {
 [回到顶部](#readme)
 
 koa-static
+
+> Koa static file serving middleware, wrapper for `koa-send`.
+
+[仓库地址](https://github.com/koajs/static)
+
+因为有`koa-send`，这个代码就简单多了。只是根据`koa`的中间件原理包了一下，同时根据配置`defer`可以决定是在洋葱模型的前半段还是后半段返回文件
+
+```js
+module.exports = serve
+
+function serve (root, opts) {
+  opts = Object.assign({}, opts)
+
+  assert(root, 'root directory is required to serve files')
+
+  // options
+  debug('static "%s" %j', root, opts)
+  opts.root = resolve(root)
+  if (opts.index !== false) opts.index = opts.index || 'index.html'
+
+  if (!opts.defer) {
+    return async function serve (ctx, next) {
+      let done = false
+
+      if (ctx.method === 'HEAD' || ctx.method === 'GET') {
+        try {
+          // 保证先把文件流发完以后才执行下一个中间件
+          done = await send(ctx, ctx.path, opts)
+        } catch (err) {
+          if (err.status !== 404) {
+            throw err
+          }
+        }
+      }
+
+      if (!done) {
+        await next()
+      }
+    }
+  }
+
+  return async function serve (ctx, next) {
+    // 有defer的情况下，保证先执行后面的中间件，回来的时候再返回文件
+    await next()
+
+    if (ctx.method !== 'HEAD' && ctx.method !== 'GET') return
+    // response is already handled
+    if (ctx.body != null || ctx.status !== 404) return // eslint-disable-line
+
+    try {
+      await send(ctx, ctx.path, opts)
+    } catch (err) {
+      if (err.status !== 404) {
+        throw err
+      }
+    }
+  }
+}
+
+```
 
 [回到顶部](#readme)
 
