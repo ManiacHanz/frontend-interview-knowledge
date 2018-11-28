@@ -153,7 +153,36 @@ Router.prototype.register = function (path, methods, middleware, opts) {
   }, this);
   // 这里把注册好的路由放进栈里
   stack.push(route);
-  // 注册完毕
+  // 注册完毕  返回route 保证链式调用
   return route;
 };
 ```
+
+##### router prefixed
+
+```js
+// example
+var router = new Router({
+  prefix: '/users'
+});
+
+router.get('/', ...); // responds to "/users"
+router.get('/:id', ...); // responds to "/users/:id"
+```
+
+很简单，就是经过一个正则处理掉`prefix`的`'/'`， 然后在调用`Layer`的`setPrefix`方法，把传进来的`prefix`和`path`拼接起来
+
+```js
+Router.prototype.prefix = function (prefix) {
+  prefix = prefix.replace(/\/$/, '');
+
+  this.opts.prefix = prefix;
+
+  this.stack.forEach(function (route) {
+    route.setPrefix(prefix);
+  });
+
+  return this;
+};
+```
+
