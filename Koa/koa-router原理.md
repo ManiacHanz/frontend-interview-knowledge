@@ -128,6 +128,7 @@ Router.prototype.register = function (path, methods, middleware, opts) {
   }
 
   // create route
+  // 见下面Layer的分析 以及配置的参数
   var route = new Layer(path, methods, middleware, {
     end: opts.end === false ? opts.end : true,
     name: opts.name,
@@ -158,6 +159,63 @@ Router.prototype.register = function (path, methods, middleware, opts) {
 };
 ```
 
+看到这里，知道了注册返回的`route`其实是一个`Layer`的实例，那么我们来看一下`Layer`是何方神圣
+
+##### Layer
+
+[仓库地址](https://github.com/pillarjs/path-to-regexp)
+
+是通过给定的`请求方法`，`路径`，`中间件处理函数`，以及`配置`来初始化一个新的路由
+
+```js
+/**
+ * Initialize a new routing Layer with given `method`, `path`, and `middleware`.
+ *
+ * @param {String|RegExp} path Path string or regular expression.
+ * @param {Array} methods Array of HTTP verbs.
+ * @param {Array} middleware Layer callback/middleware or series of.
+ * @param {Object=} opts
+ * @param {String=} opts.name route name
+ * @param {String=} opts.sensitive case sensitive (default: false)区分大小写
+ * @param {String=} opts.strict require the trailing slash (default: false)
+ * @returns {Layer}
+ * @private
+ */
+
+function Layer(path, methods, middleware, opts) {
+  this.opts = opts || {};
+  this.name = this.opts.name || null;
+  this.methods = [];
+  this.paramNames = [];
+  this.stack = Array.isArray(middleware) ? middleware : [middleware];
+
+  methods.forEach(function(method) {
+    var l = this.methods.push(method.toUpperCase());
+    if (this.methods[l-1] === 'GET') {
+      this.methods.unshift('HEAD');
+    }
+  }, this);
+
+  // ensure middleware is a function
+  this.stack.forEach(function(fn) {
+    var type = (typeof fn);
+    if (type !== 'function') {
+      throw new Error(
+        methods.toString() + " `" + (this.opts.name || path) +"`: `middleware` "
+        + "must be a function, not `" + type + "`"
+      );
+    }
+  }, this);
+
+  this.path = path;
+  this.regexp = pathToRegExp(path, this.paramNames, this.opts);
+
+  debug('defined route %s %s', this.methods, this.opts.prefix + this.path);
+};
+
+```
+
+
 ##### router prefixed
 
 ```js
@@ -183,6 +241,74 @@ Router.prototype.prefix = function (prefix) {
   });
 
   return this;
+};
+```
+
+
+```js
+app.use(router.routes())
+app.use(router.allowedMethods())
+```
+
+##### router.routes
+
+由于要注册进`app`当成`middleware`处理，所以我们来看看下面两个方法
+
+```js
+/**
+ * Returns router middleware which dispatches a route matching the request.
+ *
+ * @returns {Function}
+ */
+
+Router.prototype.routes = Router.prototype.middleware = function () {
+  // 实例
+  var router = this;
+
+  var dispatch = function dispatch(ctx, next) {
+    debug('%s %s', ctx.method, ctx.path);
+    // ctx.path 最终指向的就是request.path 代表请求的路径名
+    var path = router.opts.routerPath || ctx.routerPath || ctx.path;
+    // matched是一个含有path, pathAndMethod, route三个属性的对象，下面我们在详解这个方法
+    var matched = router.match(path, ctx.method);
+    var layerChain, layer, i;
+
+    // .matched是一个自定义属性挂在ctx上
+    if (ctx.matched) {
+      ctx.matched.push.apply(ctx.matched, matched.path);
+    } else {
+      ctx.matched = matched.path;
+    }
+
+    // 把这个实例挂在ctx上
+    ctx.router = router;
+
+    // 如果不匹配就 跳到下个中间件
+    if (!matched.route) return next();
+
+    var matchedLayers = matched.pathAndMethod
+    var mostSpecificLayer = matchedLayers[matchedLayers.length - 1]
+    ctx._matchedRoute = mostSpecificLayer.path;
+    if (mostSpecificLayer.name) {
+      ctx._matchedRouteName = mostSpecificLayer.name;
+    }
+
+    layerChain = matchedLayers.reduce(function(memo, layer) {
+      memo.push(function(ctx, next) {
+        ctx.captures = layer.captures(path, ctx.captures);
+        ctx.params = layer.params(path, ctx.captures, ctx.params);
+        ctx.routerName = layer.name;
+        return next();
+      });
+      return memo.concat(layer.stack);
+    }, []);
+
+    return compose(layerChain)(ctx, next);
+  };
+
+  dispatch.router = this;
+
+  return dispatch;
 };
 ```
 
