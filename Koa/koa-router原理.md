@@ -157,6 +157,7 @@ Router.prototype.register = function (path, methods, middleware, opts) {
     route.param(param, this.params[param]);
   }, this);
   // 这里把注册好的路由放进栈里 。指针其实也改了this.stack
+  // route.stack就是对应的中间处理函数
   stack.push(route);
   // 注册完毕  返回route 保证链式调用
   return route;
@@ -256,6 +257,57 @@ Router.prototype.prefix = function (prefix) {
 };
 ```
 
+还有一个比较关键的方法需要先了解一下
+
+##### router.match
+
+这里的逻辑大概是遍历所有的`route`实例--也就是`new Layer`的实例。当某一个实例上的`path`命中时放进一个数组，然后我们还需要把对应的`http method`匹配一次，同时命中才会把第三个变量改成`true`。然后把带着这3个变量的对象返回回去。因为有可能`/user`路径可以对应`GET`或者`POST`,不能同时命中他们的中间件
+
+```js
+/**
+ * Match given `path` and return corresponding routes.
+ * 根据传进去的path，返回应该响应的routes
+ * @param {String} path
+ * @param {String} method
+ * @returns {Object.<path, pathAndMethod>} returns layers that matched path and
+ * path and method.
+ * @private
+ */
+
+Router.prototype.match = function (path, method) {
+  // 上面看了register方法就知道这里 this.stack讲的是什么了-- 包括了所有的Layer实例
+  // 一个实例对应唯一的path，但是可以对应很多个middleware
+  var layers = this.stack;
+  var layer;
+  // 也就是说返回的一个标识是否命中的对象，3个值代表路径命中，请求方法命中才能matched
+  var matched = {
+    path: [],              // 匹配上的路由
+    pathAndMethod: [],      // 匹配的请求方法
+    route: false            // 如果有写方法就会改成true
+  };
+
+  for (var len = layers.length, i = 0; i < len; i++) {
+    layer = layers[i];
+
+    debug('test %s %s', layer.path, layer.regexp);
+    // layer里包装了.match方法，其实就是用正则去匹配路径和这个layer（route）
+    // 正则是每一个layer根据路径转化（path-to-regexp）的一个正则表达式
+    if (layer.match(path)) {
+      matched.path.push(layer);
+      // ~-1=0 ~1=-2 ~2=-3...    0转换了就是false  其他都是true 
+      // 如果是长度为0 或者layer.methods里包含method
+      if (layer.methods.length === 0 || ~layer.methods.indexOf(method)) {
+        matched.pathAndMethod.push(layer);
+        if (layer.methods.length) matched.route = true;
+      }
+    }
+  }
+
+  return matched;
+};
+```
+
+积累的东西差不多了，可以往下看了
 
 ```js
 app.use(router.routes())
@@ -281,11 +333,11 @@ Router.prototype.routes = Router.prototype.middleware = function () {
     debug('%s %s', ctx.method, ctx.path);
     // ctx.path 最终指向的就是request.path 代表请求的路径名
     var path = router.opts.routerPath || ctx.routerPath || ctx.path;
-    // matched是一个含有path, pathAndMethod, route三个属性的对象，下面我们在详解这个方法
+    // 代表命中的路径和http method
     var matched = router.match(path, ctx.method);
     var layerChain, layer, i;
 
-    // .matched是一个自定义属性挂在ctx上
+    // 同一个路径有可能对应多个中间件处理，如果有多个需要把他们放在一起
     if (ctx.matched) {
       ctx.matched.push.apply(ctx.matched, matched.path);
     } else {
@@ -295,16 +347,22 @@ Router.prototype.routes = Router.prototype.middleware = function () {
     // 把这个实例挂在ctx上
     ctx.router = router;
 
-    // 如果不匹配就 跳到下个中间件
+    // 表明没有命中路由
     if (!matched.route) return next();
-
+    
+    // 下面的都是命中了路由
+    // 即命中path也命中method的layer实例
     var matchedLayers = matched.pathAndMethod
+    // 取最后一个
     var mostSpecificLayer = matchedLayers[matchedLayers.length - 1]
+    // 把路径挂到ctx上
     ctx._matchedRoute = mostSpecificLayer.path;
+    // 如果给路径命名了就再挂在ctx上
     if (mostSpecificLayer.name) {
       ctx._matchedRouteName = mostSpecificLayer.name;
     }
 
+    // 最后又是用老朋友compose链式调用所有命中的路由 这里也是用的koa-compose实现一个洋葱圈模型
     layerChain = matchedLayers.reduce(function(memo, layer) {
       memo.push(function(ctx, next) {
         ctx.captures = layer.captures(path, ctx.captures);
