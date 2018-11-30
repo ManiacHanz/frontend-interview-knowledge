@@ -382,3 +382,9 @@ Router.prototype.routes = Router.prototype.middleware = function () {
 };
 ```
 
+再回头看`app.use(router.routes())`这句话就能理解，整个的流程大概就是先去匹配`path`和`method`两个关键的因素，匹配上了以后把所有的`middleware`数组通过`koa-compose`函数进行洋葱圈模型的调用。也就是说，除开`path`和`method`两个匹配因子，`router`就是一个普通的`koa`中间件集合
+
+
+##### allowedMethods
+
+`allowedMethods`是用来针对`OPTIONS`请求头 -- 这个请求头带有包含请求方法的`Allow` -- 返回单独的响应中间件处理。 目前在下没怎么用过。以后需要的时候在更新一下
