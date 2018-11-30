@@ -81,7 +81,7 @@ methods.forEach(function (method) {
     if (typeof path === 'string' || path instanceof RegExp) {
       middleware = Array.prototype.slice.call(arguments, 2);
     } else {
-        // 这里表示name没传
+        // 这里表示name没传。 middleware会转成数组
       middleware = Array.prototype.slice.call(arguments, 1);
       path = name;
       name = null;
@@ -97,6 +97,7 @@ methods.forEach(function (method) {
 ```
 
 
+在这里面知道了每一个`router`实例的`stack`属性里面装的是什么东西了。这里通过引用指针的改变了这个数组
 
 ```js
 /**
@@ -114,7 +115,7 @@ Router.prototype.register = function (path, methods, middleware, opts) {
   opts = opts || {};
 
   var router = this;
-  // stack是一个Array
+  // stack是一个Array 这里是引用指针，只用给了下面的stack.push()
   var stack = this.stack;
 
   // support array of paths
@@ -129,8 +130,11 @@ Router.prototype.register = function (path, methods, middleware, opts) {
 
   // create route
   // 见下面Layer的分析 以及配置的参数
+  // 这个methods是上面通过slice处理过后的中间处理函数数组
+  // 得到的route实例多了路径的正则属性regexp, 请求的method属性，中间件的stack属性
   var route = new Layer(path, methods, middleware, {
     end: opts.end === false ? opts.end : true,
+    // router.get( 'user', '/user/:id' ,...)  第一个参数 传了就直接传下去，不传就是null
     name: opts.name,
     sensitive: opts.sensitive || this.opts.sensitive || false,
     strict: opts.strict || this.opts.strict || false,
@@ -152,7 +156,7 @@ Router.prototype.register = function (path, methods, middleware, opts) {
   Object.keys(this.params).forEach(function (param) {
     route.param(param, this.params[param]);
   }, this);
-  // 这里把注册好的路由放进栈里
+  // 这里把注册好的路由放进栈里 。指针其实也改了this.stack
   stack.push(route);
   // 注册完毕  返回route 保证链式调用
   return route;
@@ -171,9 +175,9 @@ Router.prototype.register = function (path, methods, middleware, opts) {
 /**
  * Initialize a new routing Layer with given `method`, `path`, and `middleware`.
  *
- * @param {String|RegExp} path Path string or regular expression.
- * @param {Array} methods Array of HTTP verbs.
- * @param {Array} middleware Layer callback/middleware or series of.
+ * @param {String|RegExp} path Path string or regular expression. 路径
+ * @param {Array} methods Array of HTTP verbs.  HTTP的GET POST那些方法的字符串
+ * @param {Array} middleware Layer callback/middleware or series of.  路径匹配后的中间件
  * @param {Object=} opts
  * @param {String=} opts.name route name
  * @param {String=} opts.sensitive case sensitive (default: false)区分大小写
@@ -184,19 +188,24 @@ Router.prototype.register = function (path, methods, middleware, opts) {
 
 function Layer(path, methods, middleware, opts) {
   this.opts = opts || {};
+  // 把name挂过来
   this.name = this.opts.name || null;
   this.methods = [];
   this.paramNames = [];
+  // 不论是一个middleware，还是多个。都转成 数组
   this.stack = Array.isArray(middleware) ? middleware : [middleware];
 
   methods.forEach(function(method) {
+    // 数组长度
     var l = this.methods.push(method.toUpperCase());
+    // 如果最后一位是GET，就在顶位添加'HEAD'方法
     if (this.methods[l-1] === 'GET') {
       this.methods.unshift('HEAD');
     }
   }, this);
 
   // ensure middleware is a function
+  // 只是一个debug 可以不看 保证每一个middleware都是一个func
   this.stack.forEach(function(fn) {
     var type = (typeof fn);
     if (type !== 'function') {
@@ -208,12 +217,15 @@ function Layer(path, methods, middleware, opts) {
   }, this);
 
   this.path = path;
+  // pathToRegExp  把路径字符串转换成正则表达式
   this.regexp = pathToRegExp(path, this.paramNames, this.opts);
 
   debug('defined route %s %s', this.methods, this.opts.prefix + this.path);
 };
 
 ```
+
+看完`Layer`的实例化过程，其实就是在`route`上把路径，路劲正则，中间件数组，参数处理后挂在实例上，没什么神奇的。所以我们可以接着往下看了，如果遇到`route`上的方法再回头来看看`Layer`上挂在的方法的原理
 
 
 ##### router prefixed
