@@ -2,7 +2,7 @@
 # Knowledge Map
 
 
-* [抽取公共文件](#./抽取公共文件.md)
+* [抽取公共文件](./抽取公共文件.md)
 
 * 使用过webpack里面哪些plugin和loader  -- todo
 
