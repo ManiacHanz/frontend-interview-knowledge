@@ -471,7 +471,7 @@ function serve (root, opts) {
 ### 路由
 koa-router
 
-[原理分析](#./koa-router原理.md)
+[原理分析](./koa-router原理.md)
 
 [回到顶部](#readme)
 
