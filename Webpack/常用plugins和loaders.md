@@ -1,7 +1,7 @@
 
 **缓慢更新...**
 
-** Plugins
+## Plugins
 
 HtmlWebpackPlugin   [文档地址](https://webpack.docschina.org/plugins/html-webpack-plugin)
 新生成一个`html`文件，并自动根据`entry`和`output`解决引用路径问题
@@ -42,3 +42,33 @@ ProvidePlugin                  [文档地址](https://webpack.docschina.org/plug
 
 UglifyjsWebpackPlugin           [文档地址](https://webpack.docschina.org/plugins/uglifyjs-webpack-plugin)
 `webpack v4+`设置`mode: production`会自动配置`UglifyjsWebpackPlugin`
+
+
+
+## Loaders
+
+[文档](https://webpack.docschina.org/loaders/)
+
+file-loader / url-loader
+将文件发送到输出文件夹，并返回（相对）URL。默认情况下，生成的文件的文件名就是文件内容的 MD5 哈希值并会保留所引用资源的原始扩展名。 后者可以在文件大小低于限制时，返回dataUrl
+
+babel-loader 
+编译ES2015+代码
+
+style-loader 
+将模块的导出作为样式添加到 DOM 中
+
+css-loader 
+解析 CSS 文件后，使用 import 加载，并且返回 CSS 代码
+
+less-loader 
+加载和转译 LESS 文件
+
+sass-loader 
+加载和转译 SASS/SCSS 文件
+
+postcss-loader 
+使用 PostCSS 加载和转译 CSS/SSS 文件
+
+eslint-loader PreLoader
+使用 ESLint 清理代码
