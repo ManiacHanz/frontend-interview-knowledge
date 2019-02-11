@@ -4,11 +4,13 @@
 
 * [抽取公共文件](./抽取公共文件.md)
 
-* 使用过webpack里面哪些plugin和loader  -- todo
+* 使用过webpack里面哪些plugin和loader(./常用plugins.md)
+
 
 * webpack里面的插件是怎么实现的   --  todo
 
 * dev-server是怎么跑起来  --  todo
+  使用的express库，用webpack()的api，调用 `hooks`和 `run`等api跑起来的
 
 * 使用import时，webpack对node_modules里的依赖会做什么   --  todo
 
