@@ -8,6 +8,8 @@
 
 * [webpack里面的插件是怎么实现的](./plugin机制浅析.md)
 
+* [webpack里面的Loader机制](./loader机制浅析.md)
+
 * [dev-server是怎么跑起来](./浅析dev-server.md)
 使用的`express`库，还是使用`http.createServer()`这个基础的api来跑起来，然后把一些`node`的方法处理后挂载了`dev-server`的`Server`上
 
