@@ -25,3 +25,6 @@
 * after-emit 完成输出
 
 比如说[这里](./plugin机制浅析.md)里面提到的HtmlWebpackPlugin就用了`make`用来分析配置文件中传进来的`option`，用了`emit`在生成之前去分析了各个依赖的包括`favicon``js``css`文件的路径及名称，这样才能在输出之前注入到生成的html里。同时还用了`thisCompilation`钩子，在触发`compilation`事件做了一些例如html缓存是否过期、依赖文件路径是否有变化等分析
+
+
+![](./assets/webpack-lifecycle.png "webpack-lifecycle的截图")
