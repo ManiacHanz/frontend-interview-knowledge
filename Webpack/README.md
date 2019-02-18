@@ -30,29 +30,29 @@ loader需要在`build-module`的时候就去解析好，把所有的文件都输
 
   其中有几个关键节段对应的事件分别是：
 
-  ** `entry-option` 初始化option
+  1. `entry-option` 初始化option
 
-  ** `run` 开始编译
+  2. `run` 开始编译
     实际就是`Compiler`类的`run`方法，以及编译的时候会产生一个核心的`Compilation`对象
 
-  ** `make` 从entry开始递归的分析依赖，对每个依赖模块进行build
+  3. `make` 从entry开始递归的分析依赖，对每个依赖模块进行build
     比如import 'index.js' 会读取`index.js`然后继续进去读取`app.js`，然后继续进去读取`router.js`等等。大致是一个深度递归的过程
 
-  ** before-resolve - after-resolve 对其中一个模块位置进行解析
+  4. before-resolve - after-resolve 对其中一个模块位置进行解析
     主要是option里的`resolve`，分策略去读取是绝对路径，相对路径还是`node_modules`里的等等
 
-  ** build-module 开始构建 (build) 这个module,这里将使用文件对应的loader加载
+  5. build-module 开始构建 (build) 这个module,这里将使用文件对应的loader加载
     调用`do-build`方法，把所有的资源（html, css, js, assets）都生成一段js代码，才能交给`acorn`生成`AST`
 
-  ** normal-module-loader 对用loader加载完成的module(是一段js代码)进行编译,用 `acorn` 编译,生成ast抽象语法树。
+  6. normal-module-loader 对用loader加载完成的module(是一段js代码)进行编译,用 `acorn` 编译,生成ast抽象语法树。
     `acorn`可以解决`AMD` `CMD` 或者`import` `require.ensure`等等不同规范引起的差异
 
-  ** program 开始对ast进行遍历，当遇到require等一些调用表达式时，触发call require事件的handler执行，收集依赖，并。如：AMDRequireDependenciesBlockParserPlugin等
+  7. program 开始对ast进行遍历，当遇到require等一些调用表达式时，触发call require事件的handler执行，收集依赖，并。如：AMDRequireDependenciesBlockParserPlugin等
 
-  ** seal 所有依赖build完成，下面将开始对chunk进行优化，比如合并,抽取公共模块,加hash
+  8. seal 所有依赖build完成，下面将开始对chunk进行优化，比如合并,抽取公共模块,加hash
     会逐次对每个`module`和`chunk`进行整理，生成编译后的源码，同时保留编译前的原始内容。比如UglifyWebpackPlugin这种插件会在此时被调用
 
-  ** bootstrap 生成启动代码
+  9. bootstrap 生成启动代码
 
-  ** emit 把各个chunk输出到结果文件
+  10. emit 把各个chunk输出到结果文件
 
