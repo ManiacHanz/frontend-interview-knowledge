@@ -174,6 +174,12 @@ useEffect(() => {
 }, [count]); // Only re-run the effect if count changes
 ```
 
-至此基本用法就结束了。
+当然，`useEffect`会在所有渲染结束时触发，但是我们之前只需要在`componentDidMount`中请求外部数据，并在视图中更新数据，那么是不是`useEffect`不可用了？
 
-后面还有自定义`hooks`的写法，已经所有的`api`。这里暂时不写了，留待以后用时理解更新
+```jsx
+useEffect(() => {
+  fetch('somedata').then( res => useState())
+}, [])
+```
+
+只需要在第二个参数上传个空数组就行
