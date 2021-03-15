@@ -51,3 +51,18 @@ Vue3.0 使用reactive 把数据变成响应式。核心就是使用Proxy api。�
 Vue3 也是在setter里派发通知，使用`trigger`函数派发
 
 trigger的原理就是上面说的，通过target拿到depsMap，然后再通过key拿到所有的effect集合。这里面有一点就是trigger是新建里一个effects数组，把所有的effect全保存下来再触发的
+
+
+### Vue.nexttick原理
+
+两种使用方法
+```js
+Vue.$nexttick().then()
+```
+这种是当做一个普通的Promise来用
+
+```js
+Vue.$nexttick(cb)
+```
+
+这种的核心原理也是Promise。不过在调用这个的时候会把cb放入callback全局变量数组中。然后分几种情况，第一种是在Promise.resolve().then中调用。第二种是在new MutationObserver中调用（内部会建立一个文本节点用来监听，然后手动改变这个文本节点），第三种是setImmediate里调用，最后是setTimeout调用

@@ -56,3 +56,13 @@ loader需要在`build-module`的时候就去解析好，把所有的文件都输
 
   10. emit 把各个chunk输出到结果文件
 
+
+
+
+
+
+
+### DLL 优化
+
+在古老的webpack里，使用dll-plugin开启dll优化，其实就是在第一次打包的时候建立一个映射表，一般叫manifest.json。后续请求的时候就直接去这里面找
+

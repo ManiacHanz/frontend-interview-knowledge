@@ -59,7 +59,7 @@ style-loader
 将模块的导出作为样式添加到 DOM 中
 
 css-loader 
-解析 CSS 文件后，使用 import 加载，并且返回 CSS 代码
+解析 CSS 文件后，使用 import 加载，并且返回 CSS 代码（字符串）
 
 less-loader 
 加载和转译 LESS 文件
