@@ -43,7 +43,12 @@ ProvidePlugin                  [文档地址](https://webpack.docschina.org/plug
 UglifyjsWebpackPlugin           [文档地址](https://webpack.docschina.org/plugins/uglifyjs-webpack-plugin)
 `webpack v4+`设置`mode: production`会自动配置`UglifyjsWebpackPlugin`
 
+ImportPlugin
+按需加载的插件
 
+
+webpack-dashboard     [文档地址](https://www.npmjs.com/package/webpack-dashboard)
+是一款统计和优化webpack日志的工具，可以以表格形势展示日志信息。其中包括构建过程和状态、日志以及涉及的模块列表
 
 ## Loaders
 

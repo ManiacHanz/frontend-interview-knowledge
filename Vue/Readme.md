@@ -66,3 +66,42 @@ Vue.$nexttick(cb)
 ```
 
 这种的核心原理也是Promise。不过在调用这个的时候会把cb放入callback全局变量数组中。然后分几种情况，第一种是在Promise.resolve().then中调用。第二种是在new MutationObserver中调用（内部会建立一个文本节点用来监听，然后手动改变这个文本节点），第三种是setImmediate里调用，最后是setTimeout调用
+
+
+
+### 生命周期情况
+
+
+* 异步任务在created还是mounted里调用？
+
+结论：都可以。因为这两个生命周期钩子虽然有前后之分，但是都在一个tick里执行完毕。一个异步任务的耗时肯定是超过了tick的时间。所以都可以。不过需要dom操作的情况就必须要在mounted里去处理了，因为mounted是在vue调用patch函数把vdom挂载到真实节点后才出的操作
+
+* onErrorCaptured
+
+它会从当前报错的组件的父组件实例开始，尝试去查找注册的 errorCaptured 钩子函数，如果有则遍历执行并且判断 errorCaptured 钩子函数的返回值是否为 true，如果是则说明这个错误已经得到了正确的处理，就会直接结束。
+
+这里的查找是一个`while(cur) { cur = cur.parent }`的遍历。所以在根组件中注册，就可以监听到所有子孙组件的错误信息
+
+
+### vue2.0批量更新的原理
+
+vue收到对监听的变量的修改后，会触发代理的setter函数，进而通过Dep触发watcher的回调。但是这个回调不是直接触发，而是会放在一个队列里。同时，vue通过一个hash表 -- key是watch.id，每一个watch创建都有一个id，既能代表独一无二，也能通过升序标识创建的顺序 -- 保证在队列中只会存在一个回调，即
+
+```js
+if(has[id] === null) {
+   has[id] = true
+   queue.push(watcher)
+}
+```
+
+所以通过这个锁，保证只能注入一次，比如以下
+
+```js
+method: {
+   handleClick(){
+      this.msg = 1
+      this.msg = 2
+      this.msg = 3
+   }
+}
+```

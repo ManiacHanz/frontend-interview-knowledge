@@ -303,3 +303,55 @@ module.exports = sassLoader;
 ```
 
 所以看来loader也并不是什么神秘的东西，只不是是把资源经过自己的处理以后转成字符串传给下一个loader。在中间需要调一些`webpack`的api而已
+
+
+### 分类
+
+webpack loader分为inline-loader和config-loader。 config-loader一般就是配置文件里的Module.rules那部分
+
+inline-loader如下
+```js
+import Styles from 'style-loader!css-loader?modules!./styles.css'; // inline
+```
+看到这里其实也能猜到，webpack肯定会把这个字符串通过正则转换出来，那么剩下的就是，这两个loader执行顺序了
+
+config-loader分为post, normal, pre loader三种。最后合并之后的顺序是
+`post -> inline -> normal -> pre`，由于Loader是从右往左执行，所以执行顺序是`pre -> normal -> inline -> post`
+
+### loader的运行器 loader-runner
+
+loader从右往左执行的实际原理是，先从左往右的执行每个loader的pitch方法
+
+```js
+|- a-loader `pitch`
+  |- b-loader `pitch`
+    |- c-loader `pitch`
+      |- requested module is picked up as a dependency
+    |- c-loader normal execution
+  |- b-loader normal execution
+|- a-loader normal execution
+```
+
+也就是说每个Loader可以同时暴露两个方法
+
+```js
+module.exports = () => {}
+module.exports.pitch = () => {}
+```
+
+如果在b的时候使用pitch作为返回值，那就会跳过c和b本身，形成如下结构
+```js
+|- a-loader `pitch`
+  |- b-loader `pitch`
+|- a-loader normal execution
+```
+
+### loader中的this代指什么
+
+注意loader中的this既不是webpack实例，也不是compiler或者compilation。而是一个loaderContext的运行在loader-runner中的对象。
+
+比如说我们要写一个异步的loader，那么需要使用`this.async()`告知webpack这个loader是异步的，loader-runner执行这个函数以后会把该loader的`isSync`标记标位false(默认为true)。然后通过`this.callback()`去通知这个异步的处理结果
+
+### loader-utils和scheml-loader
+
+请好好利用 loader-utils 包，它提供了很多有用的工具，最常用的一个就是获取传入 loader 的 options。除了 loader-utils 之外包还有 schema-utils 包，我们可以用 schema-utils 提供的工具，获取用于校验 options 的 JSON Schema 常量，从而校验 loader options。

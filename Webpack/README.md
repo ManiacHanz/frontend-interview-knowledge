@@ -66,3 +66,23 @@ loader需要在`build-module`的时候就去解析好，把所有的文件都输
 
 在古老的webpack里，使用dll-plugin开启dll优化，其实就是在第一次打包的时候建立一个映射表，一般叫manifest.json。后续请求的时候就直接去这里面找
 
+
+
+### webpack优化
+
+构建优化两大方向： **缓存**和**多核**
+
+开发优化 
+  * 使用别名这些配置增加开发体验和效率
+  * 增加resolve.modules配置，减少webpack解析路径花费时间
+
+构建优化
+  * 合理拆包
+  * 异步加载
+  * tree shaking
+
+### 理解HMR工作机制
+
+这个机制还是使用的webpack自己的热更新机制，即在`module.hot.accept`里注入回调
+
+理解成，webpack在运行时，在bundle中维护了一个hmr运行的环境，这个环境和浏览器有一个通信 -- websocket。 当webpack监听到文件改变，就会通过websocket向客户端发送两个文件，一个manifest.json表示文件列表，一个chunk.js表示一个或多个更新的代码片段。客户端收到这个后，就会去对应的文件里比对，看它本身能不能完成这个更新，同时是不是还要递归向上，去找到依赖这个文件的文件的更新
